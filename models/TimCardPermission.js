@@ -5,13 +5,12 @@ const TimCardPermissionSchema = new mongoose.Schema(
     card: {
       type: mongoose.Types.ObjectId,
       ref: "TimCard",
-      required: true,
     },
     door: {
       type: String,
       enum: ["Oda1", "Oda2", "Oda3", "Akademi", "main-door"],
     },
-    stratDate: {
+    startDate: {
       type: Date,
       required: true,
     },
