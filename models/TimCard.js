@@ -7,7 +7,7 @@ const TimCardSchema = new mongoose.Schema(
       unique: true,
       required: [true, "Kard Id Zorunlu"],
     },
-    nameSurname: {
+    name: {
       type: String,
     },
     teskilat: {
