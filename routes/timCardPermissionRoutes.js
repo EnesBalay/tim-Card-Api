@@ -4,6 +4,7 @@ const {
   deleteTimCardPermission,
   getAllTimCardPermissions,
   getSingleTimCardPermission,
+  checkTimCardPermission,
 } = require("../controllers/timCardPermissionController");
 const {
   authenticateUser,
@@ -36,5 +37,7 @@ router
     authorizePermissions("Admin"),
     deleteTimCardPermission
   );
+
+router.route("/open-door/:card/:door").get(checkTimCardPermission);
 
 module.exports = router;

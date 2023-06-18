@@ -11,7 +11,6 @@ const {
 const createTimCardPermission = async (req, res) => {
   try {
     const { card, startDate, endDate, door } = req.body;
-    console.log(req.body);
     const timCardPermission = await TimCardPermission.create({
       card,
       startDate,
@@ -76,9 +75,40 @@ const deleteTimCardPermission = async (req, res) => {
   }
 };
 
+const checkTimCardPermission = async (req, res) => {
+  try {
+    const { card, door } = req.params;
+    const timCard = await TimCard.findOne({ cardId: card });
+
+    if (timCard) {
+      const timCardPermissions = await TimCardPermission.find({
+        card: timCard._id,
+        door: door,
+      });
+
+      let serverDate = new Date();
+      serverDate.setUTCHours(serverDate.getUTCHours() + 3);
+
+      timCardPermissions.forEach((element) => {
+        const startDate = new Date(element.startDate);
+        const endDate = new Date(element.endDate);
+        if (serverDate >= startDate && serverDate <= endDate) {
+          console.log("asd");
+          res.status(StatusCodes.OK).json(PositiveResponse);
+        }
+      });
+    }
+    res.status(StatusCodes.UNAUTHORIZED).json(NegativeResponse);
+  } catch (error) {
+    console.log(error);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(NegativeResponse);
+  }
+};
+
 module.exports = {
   createTimCardPermission,
   deleteTimCardPermission,
   getAllTimCardPermissions,
   getSingleTimCardPermission,
+  checkTimCardPermission,
 };
