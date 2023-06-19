@@ -7,6 +7,8 @@ const {
   NegativeResponse,
   NotValidResponse,
 } = require("../utils/responses.js");
+const TimCardRecord = require("../models/TimCardRecord");
+const { createTimCardDoorLog } = require("../utils/logs");
 
 const createTimCardPermission = async (req, res) => {
   try {
@@ -31,7 +33,9 @@ const getAllTimCardPermissions = async (req, res) => {
       path: "card",
       select: "cardId name",
     });
-    res.status(StatusCodes.OK).json({ timCardPermissions });
+    res
+      .status(StatusCodes.OK)
+      .json({ timCardPermissions, count: timCardPermissions.length });
   } catch (error) {
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
@@ -52,7 +56,7 @@ const getSingleTimCardPermission = async (req, res) => {
   } catch (error) {
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ msg: "Bir hata oluştu!", error: error });
+      .json({ msg: "Bir hata oluştu!", error: error.message });
   }
 };
 
@@ -62,24 +66,25 @@ const deleteTimCardPermission = async (req, res) => {
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ msg: "Böyle bir yetki bulunamadı!" });
-  }
-  try {
-    timCardPermission.deleteOne();
-    res
-      .status(StatusCodes.OK)
-      .json({ msg: "Yetki başarılı bir şekilde silindi!" });
-  } catch (error) {
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ msg: "Bir hata oluştu!", error: error });
+  } else {
+    try {
+      timCardPermission.deleteOne();
+      res
+        .status(StatusCodes.OK)
+        .json({ msg: "Yetki başarılı bir şekilde silindi!" });
+    } catch (error) {
+      res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json({ msg: "Bir hata oluştu!", error: error.message });
+    }
   }
 };
 
 const checkTimCardPermission = async (req, res) => {
+  const { card, door } = req.params;
+  const timCard = await TimCard.findOne({ cardId: card });
+  let isPermitted = false;
   try {
-    const { card, door } = req.params;
-    const timCard = await TimCard.findOne({ cardId: card });
-
     if (timCard) {
       const timCardPermissions = await TimCardPermission.find({
         card: timCard._id,
@@ -89,18 +94,25 @@ const checkTimCardPermission = async (req, res) => {
       let serverDate = new Date();
       serverDate.setUTCHours(serverDate.getUTCHours() + 3);
 
-      timCardPermissions.forEach((element) => {
+      for (const element of timCardPermissions) {
         const startDate = new Date(element.startDate);
         const endDate = new Date(element.endDate);
         if (serverDate >= startDate && serverDate <= endDate) {
-          console.log("asd");
-          res.status(StatusCodes.OK).json(PositiveResponse);
+          isPermitted = true;
+          break;
         }
-      });
+      }
     }
-    res.status(StatusCodes.UNAUTHORIZED).json(NegativeResponse);
+    if (isPermitted) {
+      createTimCardDoorLog(card, door, "Açık", timCard._id);
+      res.status(StatusCodes.OK).json(PositiveResponse);
+    } else {
+      createTimCardDoorLog(card, door, "Kapalı", timCard._id);
+      res.status(StatusCodes.UNAUTHORIZED).json(NegativeResponse);
+    }
   } catch (error) {
-    console.log(error);
+    createTimCardDoorLog(card, door, "Kapalı", timCard._id);
+    console.log(error.message);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(NegativeResponse);
   }
 };
