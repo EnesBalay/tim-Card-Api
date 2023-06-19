@@ -14,9 +14,7 @@ const TimCardRecordSchema = new mongoose.Schema(
     state: {
       type: String,
       enum: ["Kapalı", "Açık"],
-    },
-    Akademi1: Boolean,
-    Akademi2: Boolean,
+    }
   },
   {
     timestamps: true,

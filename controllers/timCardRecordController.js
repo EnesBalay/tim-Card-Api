@@ -12,11 +12,28 @@ const createTimCardRecord = async (req, res) => {
 const getAllTimCardRecords = async (req, res) => {
   const timCardRecords = await TimCardRecord.find({}).populate({
     path: "card",
-    select:"cardId name teskilat"
+    select: "cardId name teskilat",
   });
   res
     .status(StatusCodes.OK)
     .json({ timCardRecords, count: timCardRecords.length });
+};
+
+const getEndTimCardRecords = async (req, res) => {
+  const { limit } = req.params;
+  const timCardRecords = await TimCardRecord.find({})
+    .sort({ _id: -1 })
+    .limit(limit)
+    .exec()
+    .then((records) => {
+      console.log("Son" + limit + "kayıt:", records);
+      res
+        .status(StatusCodes.OK)
+        .json({ records, count: records.length });
+    })
+    .catch((error) => {
+      console.log("Kayıt getirme hatası:", error);
+    });
 };
 
 const updateCardRecordWithCardId = async (req, res) => {
@@ -39,7 +56,7 @@ const getSingleTimCardRecord = async (req, res) => {
 
   if (!timCardRecord) {
     throw new CustomError.NotFoundError(
-      `No timCardRecord with id : ${timCardRecordId}`
+      `Bu id ile bir kart kaydı bulunamadı  : ${timCardRecordId}`
     );
   }
 
@@ -60,7 +77,7 @@ const updateTimCardRecord = async (req, res) => {
 
   if (!timCardRecord) {
     throw new CustomError.NotFoundError(
-      `No timCardRecord with id : ${timCardRecordId}`
+      `Bu id ile bir kart kaydı bulunamadı  : ${timCardRecordId}`
     );
   }
 
@@ -73,12 +90,25 @@ const deleteTimCardRecord = async (req, res) => {
 
   if (!timCardRecord) {
     throw new CustomError.NotFoundError(
-      `No timCardRecord with id : ${timCardRecordId}`
+      `Bu id ile bir kart kaydı bulunamadı : ${timCardRecordId}`
     );
   }
 
-  await timCardRecord.remove();
-  res.status(StatusCodes.OK).json({ msg: "Success! TimCardRecord removed." });
+  await timCardRecord.deleteOne();
+  res.status(StatusCodes.OK).json({ msg: "Başarılı! Kart kaydı silindi." });
+};
+
+const deleteAllTimCardRecords = async (req, res) => {
+  try {
+    await TimCardRecord.deleteMany({});
+    res
+      .status(StatusCodes.OK)
+      .json({ msg: "Başarılı! Bütün kart kayıtları silindi." });
+  } catch (error) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ msg: "Bir hata oluştu!", error: error.message });
+  }
 };
 
 module.exports = {
@@ -88,4 +118,6 @@ module.exports = {
   updateTimCardRecord,
   deleteTimCardRecord,
   updateCardRecordWithCardId,
+  deleteAllTimCardRecords,
+  getEndTimCardRecords,
 };

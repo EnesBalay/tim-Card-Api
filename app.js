@@ -20,6 +20,7 @@ const connectDb = require("./db/connect");
 const authRouter = require("./routes/authRoutes");
 const userRouter = require("./routes/userRoutes");
 const timCardRouter = require("./routes/timCardRoutes");
+const timCardRecordRouter = require("./routes/timCardRecordRoutes");
 const timCardPermissionRouter = require("./routes/timCardPermissionRoutes");
 
 //middleware
@@ -51,6 +52,7 @@ app.get("/api", (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/timCard", timCardRouter);
+app.use("/api/timCardRecord", timCardRecordRouter);
 app.use("/api/timPermission", timCardPermissionRouter);
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
