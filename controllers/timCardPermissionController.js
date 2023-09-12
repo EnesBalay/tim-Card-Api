@@ -83,37 +83,42 @@ const deleteTimCardPermission = async (req, res) => {
 const checkTimCardPermission = async (req, res) => {
   const { card, door } = req.params;
   const timCard = await TimCard.findOne({ cardId: card });
-  let isPermitted = false;
-  try {
-    if (timCard) {
-      const timCardPermissions = await TimCardPermission.find({
-        card: timCard._id,
-        door: door,
-      });
+  if (timCard) {
+    let isPermitted = false;
+    try {
+      if (timCard) {
+        const timCardPermissions = await TimCardPermission.find({
+          card: timCard._id,
+          door: door,
+        });
 
-      let serverDate = new Date();
-      serverDate.setUTCHours(serverDate.getUTCHours() + 3);
+        let serverDate = new Date();
+        serverDate.setUTCHours(serverDate.getUTCHours() + 3);
 
-      for (const element of timCardPermissions) {
-        const startDate = new Date(element.startDate);
-        const endDate = new Date(element.endDate);
-        if (serverDate >= startDate && serverDate <= endDate) {
-          isPermitted = true;
-          break;
+        for (const element of timCardPermissions) {
+          const startDate = new Date(element.startDate);
+          const endDate = new Date(element.endDate);
+          if (serverDate >= startDate && serverDate <= endDate) {
+            isPermitted = true;
+            break;
+          }
         }
       }
-    }
-    if (isPermitted) {
-      createTimCardDoorLog(card, door, "Açık", timCard._id);
-      res.status(StatusCodes.OK).json(PositiveResponse);
-    } else {
+      if (isPermitted) {
+        createTimCardDoorLog(card, door, "Açık", timCard._id);
+        res.status(StatusCodes.OK).json(PositiveResponse);
+      } else {
+        createTimCardDoorLog(card, door, "Kapalı", timCard._id);
+        res.status(StatusCodes.UNAUTHORIZED).json(NegativeResponse);
+      }
+    } catch (error) {
       createTimCardDoorLog(card, door, "Kapalı", timCard._id);
-      res.status(StatusCodes.UNAUTHORIZED).json(NegativeResponse);
+      console.log(error.message);
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(NegativeResponse);
     }
-  } catch (error) {
-    createTimCardDoorLog(card, door, "Kapalı", timCard._id);
-    console.log(error.message);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(NegativeResponse);
+  }else{
+    createTimCardDoorLog(card, door, "Kapalı");
+    res.status(StatusCodes.UNAUTHORIZED).json(NegativeResponse);
   }
 };
 

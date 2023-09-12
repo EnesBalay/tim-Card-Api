@@ -22,14 +22,16 @@ const getAllTimCardRecords = async (req, res) => {
 const getEndTimCardRecords = async (req, res) => {
   const { limit } = req.params;
   const timCardRecords = await TimCardRecord.find({})
+    .populate({
+      path: "card",
+      select: "cardId name teskilat",
+    })
     .sort({ _id: -1 })
     .limit(limit)
     .exec()
     .then((records) => {
       console.log("Son" + limit + "kayıt:", records);
-      res
-        .status(StatusCodes.OK)
-        .json({ records, count: records.length });
+      res.status(StatusCodes.OK).json({ records, count: records.length });
     })
     .catch((error) => {
       console.log("Kayıt getirme hatası:", error);
